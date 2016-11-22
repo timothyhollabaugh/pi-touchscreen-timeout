@@ -48,7 +48,7 @@ int main(int argc, char* argv[]){
 		now = time(NULL);
 		
 		if(event_size != -1){
-			printf("Touched! Value: %d, Code: %x\n", event[0].value, event[0].code);
+			//printf("Touched! Value: %d, Code: %x\n", event[0].value, event[0].code);
 			touch = now;
 
 			if(on == '1'){
