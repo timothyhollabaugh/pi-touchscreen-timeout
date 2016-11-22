@@ -11,31 +11,18 @@ It uses the linux event device `/dev/input/event0` to recive events from the tou
 
 #Installation
 
-Clone the repository:
-`git clone https://github.com/chickenchuck040/pi-touchscreen-timeout.git`
-
-Run it!
+Clone the repository and change directories:
 ```
+git clone https://github.com/chickenchuck040/pi-touchscreen-timeout.git
 cd pi-touchscreen-timeout
+```
+
+Build and run it!
+```
+gcc timout.c -otimeout
 sudo ./timeout
 ```
 
 **Note:** It must be run as root or with `sudo` to be able to access the backlight.
 
 It is recommended to make it run at startup, for example putting a line in `/etc/rc.local`
-
-#Compiling
-
-The binary available was built on a Raspberry Pi 3. To run it on a different Raspberry Pi, or if you want to change the timeout, it is necessary to recompile the code.
-
-Clone the repository:
-`git clone https://github.com/chickenchuck040/pi-touchscreen-timeout.git`
-
-Build the code:
-```
-cd pi-touchscreen-timeout
-gcc timout.c -otimeout
-```
-
-Run it!
-`sudo ./timeout`
