@@ -9,7 +9,7 @@ The default timeout is ten seconds. It is defined in the top of timeout.c if you
 
 It uses the linux event device `/dev/input/event0` to recive events from the touchscreen, and `/sys/class/backlight/rpi-backlight/bl_power` to turn the backlight on and off
 
-#Installation
+# Installation
 
 Clone the repository and change directories:
 ```
