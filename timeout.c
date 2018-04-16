@@ -1,4 +1,4 @@
-/* touch-blanker.c - a little program to blank the RPi touchscreen and unblank it
+/* timeout.c - a little program to blank the RPi touchscreen and unblank it
    on touch.  Original by https://github.com/timothyhollabaugh
 
    2018-04-16 - Joe Hartley, https://github.com/JoeHartley3
