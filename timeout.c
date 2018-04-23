@@ -16,6 +16,8 @@
    * Raspbian Wheezy
      Edit /etc/kbd/config and change the values for the variable shown below, then reboot:
        BLANK_TIME=0
+
+   2018-04-23 - Moved nanosleep() outside of last if statement, fixed help screen to be consistent with binary name
 */
 
 #include <stdio.h>
@@ -28,7 +30,7 @@
 
 int main(int argc, char* argv[]){
         if (argc != 3) {
-                printf("Usage: touch-blanker <timeout_sec> <device>\n");
+                printf("Usage: timeout <timeout_sec> <device>\n");
                 printf("    Use lsinput to see input devices.\n");
                 printf("    Device to use is shown as /dev/input/<device>\n");
                 exit(1);
@@ -110,7 +112,7 @@ int main(int argc, char* argv[]){
                                 on = '1';
                                 write(lightfd, &on, sizeof(char));
                         }
-                nanosleep(&sleepTime, NULL);
                 }
+                nanosleep(&sleepTime, NULL);
         }
 }
