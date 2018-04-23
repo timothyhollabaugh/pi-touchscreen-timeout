@@ -22,7 +22,7 @@ backlight on and off.  The event device is a command-line parameter without the
 
 Clone the repository and change directories:
 ```
-git clone https://github.com/joehartley3/pi-touchscreen-timeout.git
+git clone https://github.com/timothyhollabaugh/pi-touchscreen-timeout.git
 cd pi-touchscreen-timeout
 ```
 
