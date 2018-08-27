@@ -18,6 +18,10 @@
        BLANK_TIME=0
 
    2018-04-23 - Moved nanosleep() outside of last if statement, fixed help screen to be consistent with binary name
+
+   2018-08-22 - CJ Vaughter, https://github.com/cjvaughter
+     Added support for multiple input devices
+     Added external backlight change detection
 */
 
 #include <stdio.h>
@@ -29,8 +33,8 @@
 #include <string.h>
 
 int main(int argc, char* argv[]){
-        if (argc != 3) {
-                printf("Usage: timeout <timeout_sec> <device>\n");
+        if (argc < 3) {
+                printf("Usage: timeout <timeout_sec> <device> [<device>...]\n");
                 printf("    Use lsinput to see input devices.\n");
                 printf("    Device to use is shown as /dev/input/<device>\n");
                 exit(1);
@@ -45,18 +49,36 @@ int main(int argc, char* argv[]){
                         exit(1);
                 }
         timeout = atoi(argv[1]);
-        char device[32] = "/dev/input/";
-        strcat(device, argv[2]);
-        printf("Using input device %s\n", device);
 
+        int num_dev = argc - 2;
+        int eventfd[num_dev];
+        char device[num_dev][32];
+        for (i = 0; i < num_dev; i++) {
+                device[i][0] = '\0';
+                strcat(device[i], "/dev/input/");
+                strcat(device[i], argv[i + 2]);
+
+                int event_dev = open(device[i], O_RDONLY | O_NONBLOCK);
+                if(event_dev == -1){
+                        int err = errno;
+                        printf("Error opening %s: %d\n", device[i], err);
+                        exit(1);
+                }
+                eventfd[i] = event_dev;
+        }
+        printf("Using input device%s: ", (num_dev > 1) ? "s" : "");
+        for (i = 0; i < num_dev; i++) {
+                printf("%s ", device[i]);
+        }
+        printf("\n");
 
         printf("Starting...\n");
         struct input_event event[64];
-        int eventfd;
         int lightfd;
         int event_size;
         int light_size;
         int size = sizeof(struct input_event);
+        char read_on;
         char on;
 
         /* new sleep code to bring CPU usage down from 100% on a core */
@@ -64,15 +86,7 @@ int main(int argc, char* argv[]){
         sleepTime.tv_sec = 0;
         sleepTime.tv_nsec = 10000000L;  /* 0.1 seconds - larger values may reduce load even more */
 
-        eventfd = open(device, O_RDONLY | O_NONBLOCK);
-
-        if(eventfd == -1){
-                int err = errno;
-                printf("Error opening touchscreen device: %d", err);
-                exit(1);
-        }
-
-        lightfd = open("/sys/class/backlight/rpi_backlight/bl_power", O_RDWR);
+        lightfd = open("/sys/class/backlight/rpi_backlight/bl_power", O_RDWR | O_NONBLOCK);
 
         if(lightfd == -1){
                 int err = errno;
@@ -80,9 +94,9 @@ int main(int argc, char* argv[]){
                 exit(1);
         }
 
-        light_size = read(lightfd, &on, sizeof(char));
+        light_size = read(lightfd, &read_on, sizeof(char));
 
-        if(light_size == -1){
+        if(light_size < sizeof(char)){
                 int err = errno;
                 printf("Error reading backlight file: %d", err);
                 exit(1);
@@ -90,29 +104,47 @@ int main(int argc, char* argv[]){
 
         time_t now = time(NULL);
         time_t touch = now;
+        on = read_on;
 
-        while(1){
-                event_size = read(eventfd, event, size*64);
+        while(1) {
                 now = time(NULL);
-
-                if(event_size != -1){
-                        printf("Touched! Value: %d, Code: %x\n", event[0].value, event[0].code);
-                        touch = now;
-
-                        if(on == '1'){
-                                printf("Turning On\n");
+                
+                lseek(lightfd, 0, SEEK_SET);
+                light_size = read(lightfd, &read_on, sizeof(char));
+                if(light_size == sizeof(char) && read_on != on) {
+                        if (read_on == '0') {
+                                printf("Power enabled externally - Timeout reset\n");
                                 on = '0';
-                                write(lightfd, &on, sizeof(char));
+                                touch = now;
+                        }
+                        else if (read_on == '1') {
+                                printf("Power disabled externally\n");
+                                on = '1';
                         }
                 }
 
-                if(difftime(now, touch) > timeout){
-                        if(on == '0'){
+                for (i = 0; i < num_dev; i++) {               
+                        event_size = read(eventfd[i], event, size*64);
+                        if(event_size != -1) {
+                                printf("%s Value: %d, Code: %x\n", device[i], event[0].value, event[0].code);
+                                touch = now;
+
+                                if(on == '1') {
+                                        printf("Turning On\n");
+                                        on = '0';
+                                        write(lightfd, &on, sizeof(char));
+                                }
+                        }
+                }
+
+                if(difftime(now, touch) > timeout) {
+                        if(on == '0') {
                                 printf("Turning Off\n");
                                 on = '1';
                                 write(lightfd, &on, sizeof(char));
                         }
                 }
+
                 nanosleep(&sleepTime, NULL);
         }
 }
