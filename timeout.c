@@ -25,6 +25,7 @@
 
    2021-12-04 - Tim H
      Include new headers (ctype.h, unistd.h) for isdigit and read, write, lseek
+     Take backlight name from arguments
 
 */
 
@@ -39,8 +40,9 @@
 #include <ctype.h>
 
 int main(int argc, char* argv[]){
-        if (argc < 3) {
-                printf("Usage: timeout <timeout_sec> <device> [<device>...]\n");
+        if (argc < 4) {
+                printf("Usage: timeout <timeout_sec> <backlight> <device> [<device>...]\n");
+		printf("    Backlights are in /sys/class/backlight/<backlight>.\n");
                 printf("    Use lsinput to see input devices.\n");
                 printf("    Device to use is shown as /dev/input/<device>\n");
                 exit(1);
@@ -56,13 +58,17 @@ int main(int argc, char* argv[]){
                 }
         timeout = atoi(argv[1]);
 
-        int num_dev = argc - 2;
+	char backlight_path[64] = "/sys/class/backlight/";
+	strcat(backlight_path, argv[2]);
+	strcat(backlight_path, "/bl_power");
+
+        int num_dev = argc - 3;
         int eventfd[num_dev];
         char device[num_dev][32];
         for (i = 0; i < num_dev; i++) {
                 device[i][0] = '\0';
                 strcat(device[i], "/dev/input/");
-                strcat(device[i], argv[i + 2]);
+                strcat(device[i], argv[i + 3]);
 
                 int event_dev = open(device[i], O_RDONLY | O_NONBLOCK);
                 if(event_dev == -1){
@@ -92,7 +98,7 @@ int main(int argc, char* argv[]){
         sleepTime.tv_sec = 0;
         sleepTime.tv_nsec = 10000000L;  /* 0.1 seconds - larger values may reduce load even more */
 
-        lightfd = open("/sys/class/backlight/rpi_backlight/bl_power", O_RDWR | O_NONBLOCK);
+        lightfd = open(backlight_path, O_RDWR | O_NONBLOCK);
 
         if(lightfd == -1){
                 int err = errno;
