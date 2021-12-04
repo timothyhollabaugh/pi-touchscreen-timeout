@@ -29,8 +29,9 @@ cd pi-touchscreen-timeout
 Build and run it!
 ```
 gcc timeout.c -o timeout
-sudo ./timeout 10 event0
+sudo ./timeout 10 rpi_backlight event0
 ```
+Your backlight might be named differently. To find your backlight name, use `ls /sys/class/backlight/` and replace `rpi_backlight` in the command above
 
 Multiple devices may be specified.
 
