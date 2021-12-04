@@ -22,15 +22,21 @@
    2018-08-22 - CJ Vaughter, https://github.com/cjvaughter
      Added support for multiple input devices
      Added external backlight change detection
+
+   2021-12-04 - Tim H
+     Include new headers (ctype.h, unistd.h) for isdigit and read, write, lseek
+
 */
 
 #include <stdio.h>
+#include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/input.h>
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 int main(int argc, char* argv[]){
         if (argc < 3) {
